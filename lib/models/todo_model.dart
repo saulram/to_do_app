@@ -1,11 +1,17 @@
+import 'package:isar/isar.dart';
+part 'todo_model.g.dart';
+
+@Collection()
 class ToDo{
+  Id id = Isar.autoIncrement;
   String title;
-  String description;
+  String? description;
   bool isDone;
   ToDo({
     required this.title,
-    required this.description,
+    this.description,
     this.isDone = false,
   });
 
 }
+

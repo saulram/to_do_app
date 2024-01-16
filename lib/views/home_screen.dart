@@ -1,6 +1,9 @@
 // Importa los paquetes necesarios de Flutter y Provider.
 import 'package:flutter/material.dart';
+import 'package:neumorphic_ui/neumorphic_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:to_do_app/common/neumorphic_container.dart';
+import 'package:to_do_app/theme/theme.dart';
 import 'package:to_do_app/viewmodels/home_screen_viewmodel.dart';
 
 import '../models/todo_model.dart';
@@ -40,11 +43,21 @@ class _HomeScreenState extends State<HomeScreen> {
     // Esto permite acceder al estado y la lógica definida en HomeScreenViewModel.
     // El parámetro 'listen: true' indica que este widget se reconstruirá cada vez que el ViewModel notifique cambios.
     _viewModel = Provider.of<HomeScreenViewModel>(context, listen: true);
+    ThemeData theme = Theme.of(context);
 
     // Construye la interfaz de usuario para este widget.
     // Scaffold es un layout para la estructura visual principal de la pantalla.
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: NeumorphicFloatingActionButton(
+        style: NeumorphicStyle(
+          depth:-4,
+          intensity: 0.7,
+          color: theme.scaffoldBackgroundColor,
+          boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(16)),
+          shadowDarkColor: theme.shadowColor,
+          shadowLightColor: theme.shadowColor,
+
+        ),
         onPressed: (){
           // Cuando el usuario pulsa el botón flotante, muestra un diálogo para añadir una nueva tarea.
           showDialog(
@@ -57,32 +70,64 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Los campos de texto para el título y la descripción de la tarea.
-                    TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Título',
+                    Neumorphic(
+                      style: NeumorphicStyle(
+                        depth: -4,
+                        intensity: 0.7,
+                        color: theme.scaffoldBackgroundColor,
+                        boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(16)),
+                        shadowDarkColor: theme.shadowColor,
+                        shadowLightColor: theme.shadowColor,
+
                       ),
-                      onChanged: (String value) {
-                        // Cuando el usuario escribe en el campo de texto, actualiza el título de la tarea.
-                       setState(() {
-                          todo.title = value;
-                       });
-                      },
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          labelText: 'Título',
+                        ),
+                        onChanged: (String value) {
+                          // Cuando el usuario escribe en el campo de texto, actualiza el título de la tarea.
+                         setState(() {
+                            todo.title = value;
+                         });
+                        },
+                      ),
                     ),
-                    TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Descripción',
+                    SizedBox(height: 16,),
+                    Neumorphic(
+                      style: NeumorphicStyle(
+                        depth: -4,
+                        intensity: 0.7,
+                        color: theme.scaffoldBackgroundColor,
+                        boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(16)),
+                        shadowDarkColor: theme.shadowColor,
+                        shadowLightColor: theme.shadowColor,
+
                       ),
-                      onChanged: (String value) {
-                        // Cuando el usuario escribe en el campo de texto, actualiza la descripción de la tarea.
-                        setState(() {
-                          todo.description = value;
-                        });
-                      },
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          labelText: 'Descripción',
+                        ),
+                        onChanged: (String value) {
+                          // Cuando el usuario escribe en el campo de texto, actualiza la descripción de la tarea.
+                          setState(() {
+                            todo.description = value;
+                          });
+                        },
+                      ),
                     ),
                   ],
                 ),
                 actions: [
-                  TextButton(
+                  NeumorphicButton(
+                    style: NeumorphicStyle(
+                      depth: 4,
+                      intensity: 0.6,
+                      color: theme.scaffoldBackgroundColor,
+                      boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(16)),
+                      shadowDarkColor: theme.shadowColor,
+                      shadowLightColor: theme.shadowColor,
+
+                    ),
                     onPressed: () {
                       // Cuando el usuario pulsa el botón, añade una nueva tarea a la lista.
                       _viewModel.addTodo(todo);
@@ -95,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Cierra el diálogo.
                       Navigator.of(context).pop();
                     },
-                    child: const Text('Añadir'),
+                    child:  Text('Añadir',style: theme.textTheme.labelLarge),
                   ),
                 ],
               );
@@ -104,29 +149,96 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         child: const Icon(Icons.add),
       ),
+
       // Body define el contenido principal de Scaffold.
+      appBar: AppBar(
+
+        title: const Text('Tareas'),
+        leading: GestureDetector(child: Icon(context.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+        onTap: (){
+          _viewModel.toggleDarkMode();
+        },),
+        actions: [
+          // El botón de acción de la AppBar permite al usuario filtrar las tareas por estado.
+          PopupMenuButton(
+            onSelected: (TodoStatus value) {
+              // Cuando el usuario selecciona un elemento del menú emergente, actualiza el filtro.
+              _viewModel.filter(value);
+            },
+            itemBuilder: (BuildContext context) {
+              // El menú emergente muestra tres opciones: Mostrar todas las tareas, Mostrar tareas completadas y Mostrar tareas pendientes.
+              return [
+                 PopupMenuItem(
+                  value: TodoStatus.all,
+                  child: Text('Todas las tareas',style: theme.textTheme.bodyMedium,),
+                ),
+                 PopupMenuItem(
+                  value: TodoStatus.active,
+                  child: Text('Pendientes',style: theme.textTheme.bodyMedium),
+                ),
+                 PopupMenuItem(
+                  value: TodoStatus.completed,
+                  child: Text('Completadas',style: theme.textTheme.bodyMedium),
+                ),
+              ];
+            },
+          ),
+        ],
+      ),
       body: _viewModel.todos.isEmpty ? Center(
         child: Text('No hay tareas, comienza agregando una'),
 
-      ) :ListView.builder(
-        itemCount: _viewModel.todos.length,
-        itemBuilder: (BuildContext context, int index) {
-          return ListTile(
-            title: Text(_viewModel.todos[index].title),
-            subtitle: Text(_viewModel.todos[index].description),
-            trailing: Checkbox(
-              value: _viewModel.todos[index].isDone,
-              onChanged: (bool? value) {
-                // Cuando el usuario cambia el valor del checkbox, llama al método updateTodo del ViewModel.
-                // Esto actualiza el estado de la tarea y notifica a los oyentes (widgets) que se ha actualizado.
-                _viewModel.updateTodo(
-                  _viewModel.todos[index],
-                  value!,
+      ) :Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text('Por Hacer: ${_viewModel.todos.length}'),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: ListView.builder(
+              itemCount: _viewModel.todos.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Neumorphic(
+                    style: NeumorphicStyle(
+                      depth: 4,
+                      intensity: 0.7,
+                      color: theme.scaffoldBackgroundColor,
+                      boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(16)),
+                      shadowDarkColor: theme.shadowColor,
+                      shadowLightColor: theme.shadowColor,
+
+                    ),
+                    child: ListTile(
+                      title: Text(_viewModel.todos[index].title,style: theme.textTheme.titleMedium,),
+                      subtitle: Text(_viewModel.todos[index].description ?? '',style: theme.textTheme.bodyMedium),
+                      trailing: Switch.adaptive(
+
+                        value: _viewModel.todos[index].isDone,
+                        onChanged: (value) {
+                          print(value);
+                          // Cuando el usuario cambia el valor del checkbox, llama al método updateTodo del ViewModel.
+                          // Esto actualiza el estado de la tarea y notifica a los oyentes (widgets) que se ha actualizado.
+                          _viewModel.updateTodo(
+                            _viewModel.todos[index],
+                            value!,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
